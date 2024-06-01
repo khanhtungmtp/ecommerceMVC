@@ -1,6 +1,7 @@
 ﻿using ecommerceMVC.Data;
 using ecommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ecommerceMVC.Controllers
 {
@@ -48,6 +49,29 @@ namespace ecommerceMVC.Controllers
                 MoTaNgan = p.MoTaDonVi ?? "",
                 TenLoai = p.MaLoaiNavigation.TenLoai
             });
+            return View(result);
+        }
+
+        public IActionResult Detail(int id)
+        {
+            var data = _context.HangHoas.Include(p =>p.MaLoaiNavigation).SingleOrDefault(p => p.MaHh == id);
+            if(data is null)
+            {
+                TempData["Message"] = "Không thấy sản phẩm có mã {id}";
+                Redirect("/404");
+            }
+            var result = new ChiTietHangHoaVM
+            {
+                MaHh = data.MaHh,
+                TenHH = data.TenHh,
+                DonGia=data.DonGia ?? 0,
+                ChiTiet =data.MoTa ?? "",
+                Hinh=data.Hinh ?? "",
+                MoTaNgan = data.MoTaDonVi ?? "",
+                TenLoai = data.MaLoaiNavigation.TenLoai,
+                SoLuongTon = 10,
+                DiemDanhGia = 5, // check sau
+            };
             return View(result);
         }
     }
