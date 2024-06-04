@@ -1,4 +1,4 @@
-﻿namespace ecommerceMVC.Helpers
+﻿namespace ECommerceMVC.Helpers
 {
     public class SystemContains
     {

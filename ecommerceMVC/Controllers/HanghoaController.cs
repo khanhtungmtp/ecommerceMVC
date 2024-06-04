@@ -1,9 +1,9 @@
-﻿using ecommerceMVC.Data;
-using ecommerceMVC.ViewModels;
+﻿using ECommerceMVC.Data;
+using ECommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace ecommerceMVC.Controllers
+namespace ECommerceMVC.Controllers
 {
     public class HanghoaController : Controller
     {
@@ -58,7 +58,7 @@ namespace ecommerceMVC.Controllers
             if(data is null)
             {
                 TempData["Message"] = "Không thấy sản phẩm có mã {id}";
-                Redirect("/404");
+              return  Redirect("/404");
             }
             var result = new ChiTietHangHoaVM
             {

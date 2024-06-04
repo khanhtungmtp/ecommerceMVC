@@ -1,4 +1,4 @@
-﻿namespace ecommerceMVC.ViewModels
+﻿namespace ECommerceMVC.ViewModels
 {
     public class HangHoaVM
     {

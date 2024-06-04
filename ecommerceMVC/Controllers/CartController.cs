@@ -1,8 +1,8 @@
-﻿using ecommerceMVC.Data;
-using ecommerceMVC.ViewModels;
+﻿using ECommerceMVC.Data;
+using ECommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using ecommerceMVC.Helpers;
-namespace ecommerceMVC.Controllers
+using ECommerceMVC.Helpers;
+namespace ECommerceMVC.Controllers
 {
     public class CartController : Controller
     {

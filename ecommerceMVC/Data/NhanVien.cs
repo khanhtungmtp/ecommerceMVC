@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ecommerceMVC.Data;
+namespace ECommerceMVC.Data;
 
 public partial class NhanVien
 {

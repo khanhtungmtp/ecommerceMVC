@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace ecommerceMVC.Data;
+namespace ECommerceMVC.Data;
 
 public partial class Hshop2023Context : DbContext
 {
