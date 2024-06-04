@@ -1,5 +1,6 @@
 using ECommerceMVC.Data;
 using ECommerceMVC.Helpers.Automapper;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,11 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+{
+    options.LoginPath = "/User/Login";
+    options.AccessDeniedPath = "/AccessDenied";
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -34,7 +40,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 app.MapControllerRoute(
