@@ -2,6 +2,7 @@
 using ECommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using ECommerceMVC.Helpers;
+using Microsoft.AspNetCore.Authorization;
 namespace ECommerceMVC.Controllers
 {
     public class CartController : Controller
@@ -23,14 +24,14 @@ namespace ECommerceMVC.Controllers
             return View(Cart);
         }
 
-        public IActionResult AddToCart(int id,int quantity = 1)
+        public IActionResult AddToCart(int id, int quantity = 1)
         {
             var gioHang = Cart;
-            var item = gioHang.SingleOrDefault(p=>p.MaHh ==id);
+            var item = gioHang.SingleOrDefault(p => p.MaHh == id);
             if (item == null)
             {
                 var hangHoa = _context.HangHoas.SingleOrDefault(p => p.MaHh == id);
-                if(hangHoa == null)
+                if (hangHoa == null)
                 {
                     TempData["Message"] = $"Không tìm thấy hàng hoá có mã {id}";
                     return Redirect("/404");
@@ -63,6 +64,91 @@ namespace ECommerceMVC.Controllers
                 HttpContext.Session.Set(SystemContains.CART_KEY, gioHang);
             }
             return RedirectToAction("Index");
+        }
+
+        [Authorize]
+        public IActionResult Checkout()
+        {
+            if (Cart.Count == 0)
+            {
+                return Redirect("/");
+            }
+            return View(Cart);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public IActionResult Checkout(CheckoutVM vM)
+        {
+            if (ModelState.IsValid)
+            {
+                var custommerID = HttpContext.User.Claims.SingleOrDefault(p => p.Type == SystemContains.CUSTOMMER_ID)?.Value;
+                if (string.IsNullOrEmpty(custommerID))
+                {
+                    return View(Cart);
+                }
+                var khachHang = new KhachHang();
+                if (vM.GiongKhachHang)
+                {
+                    khachHang = _context.KhachHangs.SingleOrDefault(x => x.MaKh == custommerID);
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(vM.DiaChi))
+                    {
+                        TempData["ErrorMessage"] = "Địa chỉ giao hàng không được bỏ trống";
+                        return View(Cart);
+                    }
+                }
+
+                if (khachHang is null)
+                {
+                    TempData["ErrorMessage"] = "Khách hàng không tồn tại";
+                    return View(Cart);
+                }
+
+                var hoaDon = new HoaDon
+                {
+                    MaKh = custommerID,
+                    HoTen = vM.HoTen ?? khachHang.HoTen,
+                    DiaChi = vM.DiaChi ?? khachHang.DiaChi ?? "",
+                    SoDienThoai = vM.DienThoai ?? khachHang?.DienThoai,
+                    NgayDat = DateTime.Now,
+                    CachThanhToan = "COD",
+                    CachVanChuyen = "Bưu điện",
+                    GhiChu = vM.GhiChu
+                };
+                _context.Database.BeginTransaction();
+                try
+                {
+
+                    _context.Add(hoaDon);
+                    _context.SaveChanges();
+                    var cthds = new List<ChiTietHd>();
+                    foreach (var item in Cart)
+                    {
+                        cthds.Add(new ChiTietHd
+                        {
+                            MaHd = hoaDon.MaHd,
+                            SoLuong = item.SoLuong,
+                            DonGia = item.DonGia,
+                            MaHh = item.MaHh,
+                            GiamGia = 0
+                        });
+                    }
+                    _context.AddRange(cthds);
+                    _context.SaveChanges();
+                    _context.Database.CommitTransaction();
+                    // set session empty
+                    HttpContext.Session.Set<List<CartItemVM>>(SystemContains.CART_KEY, []);
+                    return View("Success");
+                }
+                catch
+                {
+                    _context.Database.RollbackTransaction();
+                }
+            }
+            return View(Cart);
         }
     }
 }

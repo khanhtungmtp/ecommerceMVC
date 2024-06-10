@@ -89,7 +89,7 @@ namespace ECommerceMVC.Controllers
                 {
                     new(ClaimTypes.Email, user.Email),
                     new(ClaimTypes.Name, user.HoTen),
-                    new("CustomerId", user.MaKh),
+                    new(SystemContains.CUSTOMMER_ID, user.MaKh),
                     // claims -role động
                     new(ClaimTypes.Role, "Customer")
                 };
