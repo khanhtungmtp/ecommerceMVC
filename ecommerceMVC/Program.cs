@@ -1,5 +1,6 @@
 using ECommerceMVC.Data;
 using ECommerceMVC.Helpers.Automapper;
+using ECommerceMVC.Helpers.Paypal;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     options.LoginPath = "/User/Login";
     options.AccessDeniedPath = "/AccessDenied";
 });
+
+// register paypal
+builder.Services.AddSingleton(x=> new PaypalClient(builder.Configuration["Paypal:AppId"], 
+    builder.Configuration["Paypal:AppSecret"],
+    builder.Configuration["Paypal:Mode"]
+    ));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

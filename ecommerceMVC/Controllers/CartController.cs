@@ -3,17 +3,20 @@ using ECommerceMVC.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using ECommerceMVC.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using ECommerceMVC.Helpers.Paypal;
 namespace ECommerceMVC.Controllers
 {
     public class CartController : Controller
     {
         private readonly Hshop2023Context _context;
+        private readonly PaypalClient _paypalClient;
 
-        public CartController(Hshop2023Context context)
+        public CartController(Hshop2023Context context, PaypalClient paypalClient)
         {
             _context = context;
+            _paypalClient = paypalClient;
         }
-
+        #region gio hang
         public List<CartItemVM> Cart
         {
             get { return HttpContext.Session.Get<List<CartItemVM>>(SystemContains.CART_KEY) ?? []; }
@@ -73,6 +76,7 @@ namespace ECommerceMVC.Controllers
             {
                 return Redirect("/");
             }
+            ViewBag.PaymentClientId = _paypalClient.ClientId;
             return View(Cart);
         }
 
@@ -150,5 +154,58 @@ namespace ECommerceMVC.Controllers
             }
             return View(Cart);
         }
+        #endregion
+
+        #region paypal payment
+        [Authorize]
+        [HttpPost("/Cart/create-paypal-order")]
+        public async Task<IActionResult> CreatePaypalOrder(CancellationToken cancellationToken)
+        {
+            // info send to paypal page
+            string tongTien = Cart.Sum(p => p.ThanhTien).ToString();
+            string donViTienTe = "USD";
+            string maDonHangThamChieu = "DH" + DateTime.Now.Ticks.ToString();
+            try
+            {
+                var response = await _paypalClient.CreateOrder(tongTien, donViTienTe, maDonHangThamChieu);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var error = new
+                {
+                    ex
+                .GetBaseException().Message
+                };
+                return BadRequest(error);
+            }
+        }
+
+        [Authorize]
+        [HttpPost("/Cart/capture-paypal-order")]
+        public async Task<IActionResult> CapturePaypalOrder(string orderId,CancellationToken cancellationToken)
+        {
+            try
+            {
+                CaptureOrderResponse response = await _paypalClient.CaptureOrder(orderId);
+                // Lưu database đơn hàng của mình o buoc nay
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var error = new
+                {
+                    ex
+                .GetBaseException().Message
+                };
+                return BadRequest(error);
+            }
+        }
+
+        public IActionResult PaymentSuccess()
+        {
+            return View("Success");
+        }
+        #endregion
     }
 }

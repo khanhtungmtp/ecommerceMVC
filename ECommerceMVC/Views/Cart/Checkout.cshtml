@@ -93,7 +93,7 @@
                             </tbody>
                         </table>
                     </div>
-               
+
                     <div class="row g-4 text-center align-items-center justify-content-center border-bottom py-3">
                         <div class="col-12">
                             <div class="form-check text-start my-3">
@@ -105,13 +105,15 @@
                     <div class="row g-4 text-center align-items-center justify-content-center border-bottom py-3">
                         <div class="col-12">
                             <div class="form-check text-start my-3">
-                                <input type="checkbox" class="form-check-input bg-primary border-0" id="Paypal-1" name="Paypal" value="Paypal">
+                                <input type="checkbox" class="form-check-input bg-primary border-0" id="Paypal" name="Paypal" value="Paypal">
                                 <label class="form-check-label" for="Paypal-1">Paypal</label>
                             </div>
                         </div>
+                        <div id="paypal-button-container" class="form-item mt-3 d-none" style="max-width:1000px;"></div>
                     </div>
                     <div class="row g-4 text-center align-items-center justify-content-center pt-4">
                         <button type="submit" class="btn border-secondary py-3 px-4 text-uppercase w-100 text-primary">Hoàn Tất đặt hàng</button>
+
                     </div>
                 </div>
             </div>
@@ -120,6 +122,7 @@
 </div>
 <!-- Checkout Page End -->
 @section Scripts {
+    <script src="https://www.paypal.com/sdk/js?client-id=@ViewBag.PaymentClientId"></script>
     <script>
         $(document).ready(function () {
             $("#GiongKhachHang").change(function () {
@@ -131,6 +134,65 @@
                     $(".delivery-info").removeClass("d-none")
                 }
             })
+            $("#Paypal").change(function () {
+                if ($(this).prop("checked")) {
+                    $(this).val(true);
+                    $("#paypal-button-container").removeClass("d-none")
+                } else {
+                    $(this).val(false);
+                    $("#paypal-button-container").addClass("d-none")
+                }
+            })
         })
+
+
+        paypal.Buttons({
+            style: {
+                borderRadius: 10,
+                layout: 'vertical',
+                color: 'silver',
+                tagline: 'false'
+            },
+            createOrder() {
+                return fetch("/Cart/create-paypal-order", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    }
+                }).then((response) => {
+                    if (!response.ok) {
+                        return response.json().then((err) => {
+                            throw error;
+                        })
+                    }
+                    return response.json();
+                }).then((order) => order.id)
+                    .catch(err => {
+                        alert(err.message);
+                    })
+            },
+            onApprove(data) {
+                // Capture the funds from the transaction.
+                return fetch(`/Cart/capture-paypal-order?orderId=${data.orderID}`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        orderID: data.orderID
+                    })
+                }).then((response) => {
+                    if (!response.ok) {
+                        return response.json().then((err) => {
+                            throw error;
+                        })
+                    }
+                    //Đổi địa chỉ tới action thông báo thành công
+                    window.location.href = "/Cart/PaymentSuccess";
+                })
+                    .catch(err => {
+                        alert(err.message);
+                    })
+
+            }
+        }).render('#paypal-button-container');
+
     </script>
 }
